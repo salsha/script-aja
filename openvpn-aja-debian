@@ -51,7 +51,7 @@ if [ -e /etc/openvpn/server.conf ]; then
 	done
 else
 	echo 'Selamat Datang di quick OpenVPN "road warrior" installer'
-	echo "Modifikasi Oleh Abu naifa untuk opreker"
+	echo "Modifikasi Oleh SecureMember"
 	echo ""
 	# OpenVPN setup and first user creation
 	echo "Pertama-tama saya perlu tahu alamat IPv4 yang ingin diinstall OpenVPN"
@@ -107,7 +107,7 @@ else
 	# Let's configure the server
 cat > /etc/openvpn/server.conf <<-END
 port 1194
-proto tcp
+proto udp
 dev tun
 tun-mtu 1500
 tun-mtu-extra 32
@@ -119,11 +119,11 @@ dh /etc/openvpn/dh1024.pem
 plugin /usr/lib/openvpn/openvpn-auth-pam.so /etc/pam.d/login
 client-cert-not-required
 username-as-common-name
-server 10.8.0.0 255.255.255.0
+server 192.168.100.0 255.255.255.0
 ifconfig-pool-persist ipp.txt
 push "redirect-gateway def1"
-push "dhcp-option DNS 8.8.8.8"
-push "dhcp-option DNS 8.8.4.4"
+push "dhcp-option DNS 208.67.222.222"
+push "dhcp-option DNS 208.67.220.220"
 push "route-method exe"
 push "route-delay 2"
 keepalive 5 30
@@ -151,10 +151,10 @@ END
 	if [ $(ifconfig | cut -c 1-8 | sort | uniq -u | grep venet0 | grep -v venet0:) = "venet0" ];then
       		iptables -t nat -A POSTROUTING -o venet0 -j SNAT --to-source $IP
 	else
-      		iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -j SNAT --to $IP
-      		iptables -t nat -A POSTROUTING -s 10.8.0.0/24 -o eth0 -j MASQUERADE
+      		iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -j SNAT --to $IP
+      		iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -o eth0 -j MASQUERADE
 	fi	
-	sed -i "/# By default this script does nothing./a\ip10tables -t nat -A POSTROUTING -s 10.8.0.0/24 -j SNAT --to $IP" /etc/rc.local
+	sed -i "/# By default this script does nothing./a\ip10tables -t nat -A POSTROUTING -s 192.168.100.0/24 -j SNAT --to $IP" /etc/rc.local
 	iptables-save
 	# And finally, restart OpenVPN
 	/etc/init.d/openvpn restart
@@ -179,7 +179,7 @@ END
 
 cat >> ~/ovpn-$CLIENT/$CLIENT.conf <<-END
 client
-proto tcp
+proto udp
 persist-key
 persist-tun
 dev tun
